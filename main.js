@@ -15,8 +15,8 @@ const isTouch = matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoi
 if (isTouch) document.body.classList.add('touch-device');
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x020605);
-scene.fog = new THREE.FogExp2(0x06100c, 0.027);
+scene.background = new THREE.Color(0x081018);
+scene.fog = new THREE.FogExp2(0x101923, 0.018);
 const camera = new THREE.PerspectiveCamera(66, innerWidth / innerHeight, 0.1, 160);
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
 renderer.setSize(innerWidth, innerHeight);
@@ -25,7 +25,7 @@ renderer.shadowMap.enabled = true;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 game.appendChild(renderer.domElement);
 
-scene.add(new THREE.HemisphereLight(0x3b7961, 0x050606, 0.7));
+scene.add(new THREE.HemisphereLight(0x8aa9c5, 0x111515, 1.05));
 const alarmLight = new THREE.PointLight(0xff382e, 20, 18);
 alarmLight.position.set(0, 3.6, -19);
 scene.add(alarmLight);
@@ -34,11 +34,47 @@ const floorMat = new THREE.MeshStandardMaterial({ color: 0x17201c, roughness: 0.
 const wallMat = new THREE.MeshStandardMaterial({ color: 0x1b2522, roughness: 0.68, metalness: 0.38 });
 const darkMat = new THREE.MeshStandardMaterial({ color: 0x07100d, roughness: 0.6, metalness: 0.55 });
 const greenMat = new THREE.MeshStandardMaterial({ color: 0x174f31, emissive: 0x0b7a3c, emissiveIntensity: 1.8, roughness: 0.35 });
+const concreteMat = new THREE.MeshStandardMaterial({ color: 0x30383c, roughness: .92, metalness: .05 });
+const wetRoadMat = new THREE.MeshStandardMaterial({ color: 0x11171b, roughness: .25, metalness: .3 });
+const glassMat = new THREE.MeshPhysicalMaterial({ color: 0x233c42, roughness: .18, metalness: .15, transparent: true, opacity: .62 });
 
 function box(w, h, d, x, y, z, mat = wallMat) {
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
   mesh.position.set(x, y, z); mesh.receiveShadow = true; mesh.castShadow = true; scene.add(mesh); return mesh;
 }
+
+// Livello 0: esterno della sede di copertura S.E.C.
+box(34, .3, 42, 0, -.14, 41, wetRoadMat);
+box(24, .24, 7, 0, .02, 22.8, concreteMat);
+box(12, .32, 2.8, 0, .08, 19.6, concreteMat);
+box(11.5, 12, 1.2, -9.2, 6, 19.3, concreteMat);
+box(11.5, 12, 1.2, 9.2, 6, 19.3, concreteMat);
+box(7, 4.5, 1.2, 0, 9.75, 19.3, concreteMat);
+for (const x of [-12.2, -8.8, 8.8, 12.2]) {
+  for (const y of [3.2, 7.4, 10.5]) box(2.15, 1.45, .12, x, y, 18.65, glassMat);
+}
+const entranceDoorLeft = box(2.25, 4.1, .18, -1.18, 2.12, 19.1, glassMat);
+const entranceDoorRight = box(2.25, 4.1, .18, 1.18, 2.12, 19.1, glassMat);
+const canopy = box(7.5, .28, 3.8, 0, 5.05, 20.1, darkMat);
+for (const x of [-4.6, 4.6]) {
+  const lamp = new THREE.PointLight(0xc9e8ff, 22, 14); lamp.position.set(x, 4.8, 23); scene.add(lamp);
+  box(.12, 4.5, .12, x, 2.25, 25.5, darkMat); box(.8, .12, .45, x, 4.55, 25.3, greenMat);
+}
+const signCanvas = document.createElement('canvas'); signCanvas.width = 768; signCanvas.height = 192;
+const signContext = signCanvas.getContext('2d'); signContext.fillStyle = '#08110e'; signContext.fillRect(0, 0, 768, 192);
+signContext.strokeStyle = '#45ff9d'; signContext.lineWidth = 5; signContext.strokeRect(6, 6, 756, 180);
+signContext.fillStyle = '#dfffee'; signContext.font = 'bold 82px sans-serif'; signContext.textAlign = 'center'; signContext.fillText('S.E.C.', 384, 102);
+signContext.fillStyle = '#6a9a82'; signContext.font = '24px sans-serif'; signContext.fillText('SYSTEMS & ENVIRONMENTAL CONTROL', 384, 148);
+const sign = new THREE.Mesh(new THREE.PlaneGeometry(5.7, 1.42), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(signCanvas) }));
+sign.position.set(0, 7.25, 18.65); scene.add(sign);
+for (let z = 26; z < 60; z += 9) {
+  box(.12, .02, 3.8, 0, .04, z, new THREE.MeshBasicMaterial({ color: 0xb5a84c }));
+}
+const rainCount = isTouch ? 450 : 900;
+const rainPositions = new Float32Array(rainCount * 3);
+for (let i = 0; i < rainCount; i++) { rainPositions[i * 3] = Math.random() * 34 - 17; rainPositions[i * 3 + 1] = Math.random() * 18; rainPositions[i * 3 + 2] = Math.random() * 42 + 19; }
+const rainGeometry = new THREE.BufferGeometry(); rainGeometry.setAttribute('position', new THREE.BufferAttribute(rainPositions, 3));
+const rain = new THREE.Points(rainGeometry, new THREE.PointsMaterial({ color: 0xb8dbef, size: .045, transparent: true, opacity: .7 })); scene.add(rain);
 
 box(12, .3, 90, 0, -.15, -24, floorMat);
 box(.35, 7, 90, -6, 3.5, -24); box(.35, 7, 90, 6, 3.5, -24);
@@ -67,7 +103,7 @@ armor.position.set(0, 1.7, .02); armor.castShadow = true; player.add(armor);
 const visor = new THREE.Mesh(new THREE.BoxGeometry(.65, .18, .5), greenMat); visor.position.set(0, 2.18, -.31); player.add(visor);
 const gun = new THREE.Mesh(new THREE.BoxGeometry(.18, .18, 1.15), darkMat); gun.position.set(.48, 1.58, -.6); player.add(gun);
 const fallbackParts = [body, armor, visor, gun];
-player.position.set(0, 0, 12); scene.add(player);
+player.position.set(0, 0, 48); scene.add(player);
 
 let jackModel = null, jackMixer = null, currentJackAction = null;
 const jackActions = {};
@@ -104,17 +140,23 @@ new GLTFLoader().load('./assets/models/jack-soldier.gltf', gltf => {
 const enemies = [];
 function spawnEnemy(x, z, scale = 1) {
   const group = new THREE.Group();
-  const flesh = new THREE.MeshStandardMaterial({ color: 0x355427, emissive: 0x0b2107, roughness: .9 });
-  const core = new THREE.Mesh(new THREE.IcosahedronGeometry(.72 * scale, 2), flesh); core.position.y = .85 * scale; core.castShadow = true; group.add(core);
-  for (let i = 0; i < 5; i++) {
-    const limb = new THREE.Mesh(new THREE.CylinderGeometry(.08, .17, 1.2 * scale, 6), flesh);
-    limb.position.set(Math.sin(i * 1.25) * .48, .35, Math.cos(i * 1.25) * .48);
-    limb.rotation.z = Math.sin(i * 2) * .7; limb.rotation.x = Math.cos(i) * .8; group.add(limb);
+  const fur = new THREE.MeshStandardMaterial({ color: 0x241d1a, roughness: 1 });
+  const infected = new THREE.MeshStandardMaterial({ color: 0x355b27, emissive: 0x173b13, emissiveIntensity: .7, roughness: .85 });
+  const body = new THREE.Mesh(new THREE.SphereGeometry(.52 * scale, 16, 10), fur); body.scale.set(1, .65, 1.55); body.position.y = .43 * scale; body.castShadow = true; group.add(body);
+  const head = new THREE.Mesh(new THREE.ConeGeometry(.35 * scale, .78 * scale, 12), infected); head.rotation.x = Math.PI / 2; head.position.set(0, .48 * scale, .86 * scale); group.add(head);
+  for (const side of [-1, 1]) {
+    const ear = new THREE.Mesh(new THREE.SphereGeometry(.16 * scale, 10, 6), infected); ear.scale.y = .35; ear.position.set(side * .27 * scale, .72 * scale, .56 * scale); group.add(ear);
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(.055 * scale, 8, 6), new THREE.MeshBasicMaterial({ color: 0xff382e })); eye.position.set(side * .18 * scale, .57 * scale, 1.15 * scale); group.add(eye);
   }
-  const eye = new THREE.Mesh(new THREE.SphereGeometry(.15 * scale, 10, 8), new THREE.MeshBasicMaterial({ color: 0xff392f })); eye.position.set(0, 1, -.66 * scale); group.add(eye);
-  group.position.set(x, 0, z); group.userData = { hp: 2, phase: Math.random() * 9 }; scene.add(group); enemies.push(group);
+  const tailCurve = new THREE.CatmullRomCurve3([new THREE.Vector3(0, .38 * scale, -.7 * scale), new THREE.Vector3(.35 * scale, .22 * scale, -1.25 * scale), new THREE.Vector3(-.25 * scale, .16 * scale, -1.85 * scale)]);
+  group.add(new THREE.Mesh(new THREE.TubeGeometry(tailCurve, 12, .045 * scale, 6, false), infected));
+  const legs = [];
+  for (const xSide of [-1, 1]) for (const zSide of [-.35, .45]) {
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(.045, .07, .34 * scale, 6), fur); leg.position.set(xSide * .35 * scale, .18 * scale, zSide * scale); leg.rotation.z = xSide * .65; group.add(leg); legs.push(leg);
+  }
+  group.position.set(x, 0, z); group.userData = { hp: 2, phase: Math.random() * 9, legs, speed: 1.8 + Math.random() * .8 }; scene.add(group); enemies.push(group);
 }
-spawnEnemy(-2.8, -8); spawnEnemy(2.4, -23, 1.15); spawnEnemy(-1.3, -40, .92); spawnEnemy(2.8, -55, 1.25);
+spawnEnemy(-2.8, 7, .78); spawnEnemy(2.4, -5, .92); spawnEnemy(-1.3, -18, .72); spawnEnemy(2.8, -31, 1.05); spawnEnemy(-3.5, -44, .82); spawnEnemy(1.6, -56, 1.12);
 
 const keys = new Set();
 const characters = {
@@ -125,7 +167,7 @@ const characters = {
 };
 let selectedKey = 'tank';
 let selectedCharacter = characters[selectedKey];
-let playing = false, yaw = 0, pitch = -.15, ammo = selectedCharacter.ammo, health = selectedCharacter.health, lastShot = 0, messageTimer;
+let playing = false, facilityEntered = false, yaw = 0, pitch = -.15, ammo = selectedCharacter.ammo, health = selectedCharacter.health, lastShot = 0, messageTimer;
 const touchMove = new THREE.Vector2();
 const raycaster = new THREE.Raycaster();
 const clock = new THREE.Clock();
@@ -226,7 +268,7 @@ function shoot() {
       target.userData.hp -= selectedCharacter.damage; target.scale.multiplyScalar(.92); flash('BERSAGLIO COLPITO');
       if (target.userData.hp <= 0) {
         scene.remove(target); enemies.splice(enemies.indexOf(target), 1);
-        objective.textContent = enemies.length ? `Elimina le anomalie: ${enemies.length}` : 'Raggiungi la porta del settore −2';
+        objective.textContent = enemies.length ? `Elimina i ratti mutati: ${enemies.length}` : 'Raggiungi la porta del settore −2';
         if (!enemies.length) doorGlow.material.emissiveIntensity = 4;
       }
     }
@@ -311,8 +353,19 @@ function update(dt, time) {
   if (touchMove.lengthSq() > .02) move.add(right.clone().multiplyScalar(touchMove.x)).add(forward.clone().multiplyScalar(-touchMove.y));
   const characterIsMoving = move.lengthSq() > .02;
   if (characterIsMoving) { move.normalize().multiplyScalar(dt * selectedCharacter.speed); player.position.add(move); }
-  player.position.x = THREE.MathUtils.clamp(player.position.x, -5.05, 5.05);
-  player.position.z = THREE.MathUtils.clamp(player.position.z, -66, 15);
+  const exterior = player.position.z > 20;
+  player.position.x = THREE.MathUtils.clamp(player.position.x, exterior ? -12 : -5.05, exterior ? 12 : 5.05);
+  player.position.z = THREE.MathUtils.clamp(player.position.z, -66, 55);
+  const doorOpen = player.position.z < 28;
+  entranceDoorLeft.position.x = THREE.MathUtils.lerp(entranceDoorLeft.position.x, doorOpen ? -2.2 : -1.18, 1 - Math.pow(.003, dt));
+  entranceDoorRight.position.x = THREE.MathUtils.lerp(entranceDoorRight.position.x, doorOpen ? 2.2 : 1.18, 1 - Math.pow(.003, dt));
+  if (!facilityEntered && player.position.z < 18.2) {
+    facilityEntered = true;
+    document.querySelector('#sectorName').textContent = '−01 / ACCESSO';
+    objective.textContent = `Elimina i ratti mutati: ${enemies.length}`;
+    flash('ACCESSO ALLA STRUTTURA S.E.C.');
+    bunkerAnnouncement('Accesso non autorizzato. Protocollo di sicurezza compromesso.');
+  }
   player.rotation.y = yaw;
   if (jackMixer && jackModel?.visible) {
     const isFiring = performance.now() - lastShot < selectedCharacter.fireRate + 80;
@@ -323,12 +376,18 @@ function update(dt, time) {
   camera.position.lerp(player.position.clone().add(camOffset), 1 - Math.pow(.001, dt));
   camera.lookAt(player.position.clone().add(new THREE.Vector3(0, 1.5 + pitch * 5, 0)).add(forward.multiplyScalar(7)));
   alarmLight.intensity = 13 + Math.sin(time * 5) * 7;
+  const rainArray = rain.geometry.attributes.position.array;
+  for (let i = 0; i < rainCount; i++) { rainArray[i * 3 + 1] -= dt * 13; if (rainArray[i * 3 + 1] < 0) rainArray[i * 3 + 1] = 18; }
+  rain.geometry.attributes.position.needsUpdate = true;
+  rain.visible = player.position.z > 17;
   for (const enemy of enemies) {
-    enemy.position.y = Math.sin(time * 2.4 + enemy.userData.phase) * .08;
+    enemy.position.y = Math.abs(Math.sin(time * 8 + enemy.userData.phase)) * .07;
+    enemy.userData.legs.forEach((leg, index) => { leg.rotation.x = Math.sin(time * 12 + index * Math.PI) * .6; });
     enemy.lookAt(player.position.x, enemy.position.y, player.position.z);
     const distance = enemy.position.distanceTo(player.position);
-    if (distance < 16) enemy.position.add(player.position.clone().sub(enemy.position).setY(0).normalize().multiplyScalar(dt * 1.05));
-    if (distance < 1.45) {
+    if (facilityEntered && distance < 18) enemy.position.add(player.position.clone().sub(enemy.position).setY(0).normalize().multiplyScalar(dt * enemy.userData.speed));
+    else enemy.rotation.y += Math.sin(time + enemy.userData.phase) * dt;
+    if (facilityEntered && distance < 1.25) {
       health = Math.max(0, health - dt * 14);
       healthText.textContent = Math.ceil(health); healthBar.style.width = `${health / selectedCharacter.health * 100}%`;
       if (!health) { playing = false; flash('SOGGETTO ABBATTUTO — RICARICA LA PAGINA'); }

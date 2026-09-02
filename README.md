@@ -17,6 +17,8 @@ Prima vertical slice gratuita del gioco sparatutto horror fantascientifico in te
 - menu operativo ridisegnato con personaggio intero, animazione e statistiche;
 - musica melodrammatica originale e rumori ambientali intermittenti direzionali;
 - primo personaggio 3D animato: Jack usa il modello Soldier con 24 animazioni;
+- nuovo livello iniziale all'esterno della sede S.E.C., con strada, facciata, illuminazione, pioggia e ingresso automatico;
+- sei ratti mutati animati sostituiscono i precedenti bersagli geometrici;
 - nessun database, account o servizio a pagamento.
 
 ## Avvio locale
