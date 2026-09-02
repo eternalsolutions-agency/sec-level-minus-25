@@ -84,10 +84,10 @@ spawnEnemy(-2.8, -8); spawnEnemy(2.4, -23, 1.15); spawnEnemy(-1.3, -40, .92); sp
 
 const keys = new Set();
 const characters = {
-  tank: { name: 'JACK RYDER', deploy: 'SCHIERA JACK RYDER', health: 140, ammo: 10, speed: 5.0, damage: 2, fireRate: 270, body: 0x273a35, armor: 0x15201d, scale: 1.08 },
-  maya: { name: 'MAYA REYES', deploy: 'SCHIERA MAYA REYES', health: 100, ammo: 18, speed: 5.7, damage: 1, fireRate: 125, body: 0x245e67, armor: 0x172640, scale: .96 },
-  ghost: { name: 'NOAH KANE', deploy: 'SCHIERA NOAH KANE', health: 85, ammo: 12, speed: 7.0, damage: 1, fireRate: 170, body: 0x304b21, armor: 0x281839, scale: .92 },
-  chen: { name: 'DR. VICTOR CHEN', deploy: 'SCHIERA VICTOR CHEN', health: 110, ammo: 12, speed: 5.3, damage: 1, fireRate: 180, body: 0x66706b, armor: 0x254641, scale: 1 }
+  tank: { name: 'JACK “TANK” RYDER', shortName: 'JACK RYDER', role: 'ASSALTO', deploy: 'SCHIERA JACK RYDER', health: 140, ammo: 10, speed: 5.0, damage: 2, fireRate: 270, body: 0x273a35, armor: 0x15201d, scale: 1.08, stats: [95, 50, 100, 90, 25], special: 'ARMATURA RINFORZATA', bio: 'Ex forze speciali. È la prima linea della squadra e può assorbire danni che fermerebbero gli altri agenti.' },
+  maya: { name: 'MAYA REYES', shortName: 'MAYA REYES', role: 'INGEGNERE', deploy: 'SCHIERA MAYA REYES', health: 100, ammo: 18, speed: 5.7, damage: 1, fireRate: 125, body: 0x245e67, armor: 0x172640, scale: .96, stats: [55, 75, 62, 76, 100], special: 'SCANNER TECNICO', bio: 'Ex ingegnere della S.E.C. Può interpretare sistemi, terminali e accessi che per gli altri agenti restano incomprensibili.' },
+  ghost: { name: 'NOAH “GHOST” KANE', shortName: 'NOAH KANE', role: 'RICOGNITORE', deploy: 'SCHIERA NOAH KANE', health: 85, ammo: 12, speed: 7.0, damage: 1, fireRate: 170, body: 0x304b21, armor: 0x281839, scale: .92, stats: [62, 100, 42, 67, 55], special: 'DNA ALTERATO', bio: 'Sopravvissuto agli esperimenti S.E.C. La mutazione gli offre percezioni e velocità fuori dal normale, ma il suo corpo è instabile.' },
+  chen: { name: 'DR. VICTOR CHEN', shortName: 'DR. VICTOR CHEN', role: 'BIOLOGO', deploy: 'SCHIERA VICTOR CHEN', health: 110, ammo: 12, speed: 5.3, damage: 1, fireRate: 180, body: 0x66706b, armor: 0x254641, scale: 1, stats: [43, 58, 78, 55, 92], special: 'RIGENERAZIONE CELLULARE', bio: 'Biologo e medico da campo. Conosce gli esperimenti di Crowther e rigenera lentamente i danni subiti durante la missione.' }
 };
 let selectedKey = 'tank';
 let selectedCharacter = characters[selectedKey];
@@ -97,7 +97,7 @@ const raycaster = new THREE.Raycaster();
 const clock = new THREE.Clock();
 
 // Audio procedurale: nessun file esterno e nessun costo di licenza.
-let audioContext, masterGain, menuGain, gameGain, audioEnabled = true, ambienceTimer;
+let audioContext, masterGain, menuGain, gameGain, audioEnabled = true, ambienceTimer, announcementTimer, melodyTimer, melodyStep = 0;
 function createTone(type, frequency, gainValue, destination) {
   const oscillator = audioContext.createOscillator();
   const gain = audioContext.createGain();
@@ -108,20 +108,27 @@ function initAudio() {
   if (audioContext) { audioContext.resume(); return; }
   audioContext = new (window.AudioContext || window.webkitAudioContext)();
   masterGain = audioContext.createGain(); menuGain = audioContext.createGain(); gameGain = audioContext.createGain();
-  masterGain.gain.value = .52; menuGain.gain.value = .8; gameGain.gain.value = 0;
+  masterGain.gain.value = .72; menuGain.gain.value = 1; gameGain.gain.value = 0;
   menuGain.connect(masterGain); gameGain.connect(masterGain); masterGain.connect(audioContext.destination);
-  const menuBass = createTone('sine', 48, .045, menuGain);
-  const menuAir = createTone('triangle', 96, .014, menuGain);
-  const menuLfo = audioContext.createOscillator(), menuLfoGain = audioContext.createGain();
-  menuLfo.frequency.value = .08; menuLfoGain.gain.value = 11; menuLfo.connect(menuLfoGain).connect(menuAir.oscillator.frequency); menuLfo.start();
-  createTone('sawtooth', 33, .028, gameGain); createTone('sine', 60, .02, gameGain);
+  createTone('sine', 43.65, .016, menuGain);
+  playMenuPhrase(); melodyTimer = setInterval(playMenuPhrase, 3400);
+}
+function playMenuPhrase() {
+  if (!audioContext || !audioEnabled || playing) return;
+  const phrases = [[130.81, 155.56, 196], [116.54, 146.83, 174.61], [103.83, 130.81, 155.56], [98, 123.47, 146.83]];
+  const chord = phrases[melodyStep++ % phrases.length];
+  chord.forEach((frequency, index) => setTimeout(() => {
+    oneShot(frequency, 2.6, index === 0 ? .09 : .045, index === 0 ? 'sine' : 'triangle', menuGain);
+    oneShot(frequency * 2, 1.8, .018, 'sine', menuGain);
+  }, index * 210));
 }
 function switchToGameAudio() {
   initAudio(); const now = audioContext.currentTime;
   menuGain.gain.cancelScheduledValues(now); gameGain.gain.cancelScheduledValues(now);
-  menuGain.gain.linearRampToValueAtTime(.08, now + 1.5); gameGain.gain.linearRampToValueAtTime(.9, now + 1.5);
-  clearInterval(ambienceTimer); ambienceTimer = setInterval(randomAmbience, 3700);
+  menuGain.gain.linearRampToValueAtTime(0, now + 1.7); gameGain.gain.linearRampToValueAtTime(1, now + 1.2);
+  clearInterval(ambienceTimer); ambienceTimer = setInterval(randomAmbience, 6200);
   setTimeout(() => bunkerAnnouncement('Attenzione. Violazione del contenimento rilevata nel settore biologico sette.'), 1300);
+  scheduleAnnouncement();
 }
 function oneShot(frequency, duration, volume, type = 'sine', destination = gameGain) {
   if (!audioContext || !audioEnabled) return;
@@ -133,19 +140,37 @@ function oneShot(frequency, duration, volume, type = 'sine', destination = gameG
 function randomAmbience() {
   if (!playing || !audioEnabled) return;
   const roll = Math.random();
-  if (roll < .4) oneShot(520 + Math.random() * 220, .18, .035, 'sine');
-  else if (roll < .72) oneShot(75 + Math.random() * 40, 1.5, .035, 'sawtooth');
-  else if (roll < .9) oneShot(1200, .55, .018, 'square');
-  else bunkerAnnouncement('Movimento non identificato nei condotti di ventilazione.');
+  const pan = Math.random() * 1.8 - .9;
+  if (roll < .38) spatialHit(68, .9, .11, pan, 'square'); // porta metallica lontana
+  else if (roll < .68) spatialHit(430 + Math.random() * 280, .16, .035, pan, 'sine'); // goccia
+  else if (roll < .88) { spatialHit(115, 1.3, .035, pan, 'sawtooth'); setTimeout(() => spatialHit(92, .5, .025, pan, 'square'), 380); }
+  else { spatialHit(1500, .7, .018, pan, 'square'); setTimeout(() => spatialHit(1100, .45, .014, pan, 'square'), 620); }
+}
+function spatialHit(frequency, duration, volume, pan, type) {
+  if (!audioContext || !audioEnabled) return;
+  const panner = audioContext.createStereoPanner(); panner.pan.value = pan; panner.connect(gameGain);
+  oneShot(frequency, duration, volume, type, panner);
+}
+function scheduleAnnouncement() {
+  clearTimeout(announcementTimer);
+  announcementTimer = setTimeout(() => {
+    if (playing && audioEnabled) bunkerAnnouncement(Math.random() > .5 ? 'Cedimento strutturale rilevato. Il personale superstite raggiunga la superficie.' : 'Presenza organica non identificata nei condotti di ventilazione.');
+    scheduleAnnouncement();
+  }, 48000 + Math.random() * 42000);
 }
 function bunkerAnnouncement(text) {
   if (!audioEnabled || !('speechSynthesis' in window)) return;
+  spatialHit(880, .14, .07, .65, 'square');
+  setTimeout(() => spatialHit(660, .11, .045, .65, 'square'), 190);
   speechSynthesis.cancel(); const voice = new SpeechSynthesisUtterance(text);
-  voice.lang = 'it-IT'; voice.rate = .78; voice.pitch = .55; voice.volume = .42; speechSynthesis.speak(voice);
+  const speakerDirection = new THREE.Vector3(5 - player.position.x, 0, -19 - player.position.z).normalize();
+  const facingSpeaker = Math.max(0, new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw)).dot(speakerDirection));
+  voice.lang = 'it-IT'; voice.rate = .72; voice.pitch = .42; voice.volume = .14 + facingSpeaker * .24;
+  setTimeout(() => speechSynthesis.speak(voice), 360);
 }
 function toggleAudio() {
   initAudio(); audioEnabled = !audioEnabled;
-  masterGain.gain.setTargetAtTime(audioEnabled ? .52 : 0, audioContext.currentTime, .08);
+  masterGain.gain.setTargetAtTime(audioEnabled ? .72 : 0, audioContext.currentTime, .08);
   document.querySelector('#audioToggle').textContent = audioEnabled ? 'AUDIO ON' : 'AUDIO OFF';
   if (!audioEnabled && 'speechSynthesis' in window) speechSynthesis.cancel();
 }
@@ -179,12 +204,20 @@ document.querySelectorAll('.character-card').forEach(card => card.addEventListen
   document.querySelectorAll('.character-card').forEach(item => item.classList.remove('selected'));
   card.classList.add('selected'); selectedKey = card.dataset.character; selectedCharacter = characters[selectedKey];
   document.querySelector('#deployAgent').textContent = selectedCharacter.deploy;
+  const preview = document.querySelector('#fullCharacter'); preview.classList.add('changing');
+  setTimeout(() => { preview.className = `full-character ${selectedKey}`; }, 150);
+  document.querySelector('#selectedRole').textContent = selectedCharacter.role;
+  document.querySelector('#selectedName').textContent = selectedCharacter.name;
+  document.querySelector('#selectedBio').textContent = selectedCharacter.bio;
+  document.querySelector('#selectedSpecial').textContent = selectedCharacter.special;
+  ['statStrength', 'statSpeed', 'statHealth', 'statWeapon', 'statTech'].forEach((id, index) => document.querySelector(`#${id}`).style.width = `${selectedCharacter.stats[index]}%`);
+  oneShot(360 + selectedCharacter.stats[1] * 2, .16, .06, 'triangle', menuGain);
 }));
 document.querySelector('#deployAgent').addEventListener('click', () => {
   characterSelect.classList.add('hidden'); hud.classList.remove('hidden'); playing = true;
   health = selectedCharacter.health; ammo = selectedCharacter.ammo;
   healthText.textContent = health; healthBar.style.width = '100%'; ammoEl.textContent = ammo;
-  document.querySelector('#agentName').textContent = `${selectedCharacter.name} // SETTORE`;
+  document.querySelector('#agentName').textContent = `${selectedCharacter.shortName} // SETTORE`;
   bodyMaterial.color.setHex(selectedCharacter.body); armorMaterial.color.setHex(selectedCharacter.armor);
   player.scale.setScalar(selectedCharacter.scale);
   switchToGameAudio();

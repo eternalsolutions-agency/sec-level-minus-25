@@ -14,6 +14,8 @@ Prima vertical slice gratuita del gioco sparatutto horror fantascientifico in te
 - selezione di quattro agenti con statistiche e stile di gioco differenti;
 - ritratti concept dei quattro agenti approvati;
 - audio procedurale per menu, generatori, gocce, metallo, spari e annunci del bunker;
+- menu operativo ridisegnato con personaggio intero, animazione e statistiche;
+- musica melodrammatica originale e rumori ambientali intermittenti direzionali;
 - nessun database, account o servizio a pagamento.
 
 ## Avvio locale

@@ -31,26 +31,28 @@
 
     <section id="characterSelect" class="screen hidden">
       <div class="selection-panel">
-        <span class="classified">S.E.C. // SQUADRA DI RECUPERO</span>
-        <h2>SCEGLI IL TUO AGENTE</h2>
-        <p>Ogni agente cambia realmente il modo di affrontare la missione.</p>
+        <header><span class="classified">S.E.C. // SQUADRA DI RECUPERO</span><h2>SELEZIONA AGENTE</h2></header>
+        <div class="selected-operative">
+          <div id="fullCharacter" class="full-character tank"><i></i></div>
+          <div class="operative-data">
+            <small id="selectedRole">ASSALTO</small>
+            <h3 id="selectedName">JACK “TANK” RYDER</h3>
+            <p id="selectedBio">Ex forze speciali. È la prima linea della squadra e può assorbire danni che fermerebbero gli altri agenti.</p>
+            <div class="stats">
+              <label>FORZA <i><b id="statStrength" style="width:95%"></b></i></label>
+              <label>VELOCITÀ <i><b id="statSpeed" style="width:50%"></b></i></label>
+              <label>RESISTENZA <i><b id="statHealth" style="width:100%"></b></i></label>
+              <label>ARMAMENTO <i><b id="statWeapon" style="width:90%"></b></i></label>
+              <label>TECNOLOGIA <i><b id="statTech" style="width:25%"></b></i></label>
+            </div>
+            <div class="special"><span>ABILITÀ SPECIALE</span><strong id="selectedSpecial">ARMATURA RINFORZATA</strong></div>
+          </div>
+        </div>
         <div class="character-grid">
-          <button class="character-card selected" data-character="tank">
-            <i class="portrait tank">JR</i><strong>JACK “TANK” RYDER</strong><small>ASSALTO</small>
-            <span>Salute 140 · Danno alto</span><em>ARMATURA RINFORZATA</em>
-          </button>
-          <button class="character-card" data-character="maya">
-            <i class="portrait maya">MR</i><strong>MAYA REYES</strong><small>INGEGNERE</small>
-            <span>Caricatore 18 · Fuoco rapido</span><em>SCANNER TECNICO</em>
-          </button>
-          <button class="character-card" data-character="ghost">
-            <i class="portrait ghost">NK</i><strong>NOAH “GHOST” KANE</strong><small>RICOGNITORE</small>
-            <span>Velocità massima · Salute 85</span><em>DNA ALTERATO</em>
-          </button>
-          <button class="character-card" data-character="chen">
-            <i class="portrait chen">VC</i><strong>DR. VICTOR CHEN</strong><small>BIOLOGO</small>
-            <span>Salute 110 · Rigenerazione</span><em>ANALISI BIOLOGICA</em>
-          </button>
+          <button class="character-card selected" data-character="tank"><i class="portrait tank">JR</i><strong>JACK</strong></button>
+          <button class="character-card" data-character="maya"><i class="portrait maya">MR</i><strong>MAYA</strong></button>
+          <button class="character-card" data-character="ghost"><i class="portrait ghost">NK</i><strong>GHOST</strong></button>
+          <button class="character-card" data-character="chen"><i class="portrait chen">VC</i><strong>CHEN</strong></button>
         </div>
         <button id="deployAgent">SCHIERA JACK RYDER</button>
       </div>
