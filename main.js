@@ -1,0 +1,145 @@
+import * as THREE from 'three';
+
+const game = document.querySelector('#game');
+const intro = document.querySelector('#intro');
+const hud = document.querySelector('#hud');
+const end = document.querySelector('#end');
+const objective = document.querySelector('#objective');
+const ammoEl = document.querySelector('#ammo');
+const healthText = document.querySelector('#healthText');
+const healthBar = document.querySelector('#healthBar');
+const message = document.querySelector('#message');
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x020605);
+scene.fog = new THREE.FogExp2(0x06100c, 0.027);
+const camera = new THREE.PerspectiveCamera(66, innerWidth / innerHeight, 0.1, 160);
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+game.appendChild(renderer.domElement);
+
+scene.add(new THREE.HemisphereLight(0x3b7961, 0x050606, 0.7));
+const alarmLight = new THREE.PointLight(0xff382e, 20, 18);
+alarmLight.position.set(0, 3.6, -19);
+scene.add(alarmLight);
+
+const floorMat = new THREE.MeshStandardMaterial({ color: 0x17201c, roughness: 0.72, metalness: 0.32 });
+const wallMat = new THREE.MeshStandardMaterial({ color: 0x1b2522, roughness: 0.68, metalness: 0.38 });
+const darkMat = new THREE.MeshStandardMaterial({ color: 0x07100d, roughness: 0.6, metalness: 0.55 });
+const greenMat = new THREE.MeshStandardMaterial({ color: 0x174f31, emissive: 0x0b7a3c, emissiveIntensity: 1.8, roughness: 0.35 });
+
+function box(w, h, d, x, y, z, mat = wallMat) {
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+  mesh.position.set(x, y, z); mesh.receiveShadow = true; mesh.castShadow = true; scene.add(mesh); return mesh;
+}
+
+box(12, .3, 90, 0, -.15, -24, floorMat);
+box(.35, 7, 90, -6, 3.5, -24); box(.35, 7, 90, 6, 3.5, -24);
+box(12, .25, 90, 0, 7, -24, darkMat);
+for (let z = 14; z > -69; z -= 8) {
+  box(12, .18, .25, 0, 6.65, z, darkMat);
+  const strip = box(5.2, .06, .16, 0, 6.52, z, greenMat);
+  strip.material = greenMat;
+  const light = new THREE.PointLight(0x42ff9a, 3.2, 10);
+  light.position.set(0, 6.35, z); scene.add(light);
+}
+for (let z = 9; z > -68; z -= 13) {
+  box(.14, 2.4, 5, -5.75, 2.6, z, darkMat);
+  box(.14, 2.4, 5, 5.75, 2.6, z - 5, darkMat);
+}
+box(10, 5.5, .5, 0, 2.75, -69, darkMat);
+const doorGlow = box(3.8, 4.4, .18, 0, 2.2, -68.7, greenMat);
+
+const player = new THREE.Group();
+const body = new THREE.Mesh(new THREE.CapsuleGeometry(.48, 1.15, 6, 10), new THREE.MeshStandardMaterial({ color: 0x273a35, roughness: .65 }));
+body.position.y = 1.35; body.castShadow = true; player.add(body);
+const armor = new THREE.Mesh(new THREE.BoxGeometry(1.12, .85, .58), new THREE.MeshStandardMaterial({ color: 0x15201d, metalness: .5 }));
+armor.position.set(0, 1.7, .02); armor.castShadow = true; player.add(armor);
+const visor = new THREE.Mesh(new THREE.BoxGeometry(.65, .18, .5), greenMat); visor.position.set(0, 2.18, -.31); player.add(visor);
+const gun = new THREE.Mesh(new THREE.BoxGeometry(.18, .18, 1.15), darkMat); gun.position.set(.48, 1.58, -.6); player.add(gun);
+player.position.set(0, 0, 12); scene.add(player);
+
+const enemies = [];
+function spawnEnemy(x, z, scale = 1) {
+  const group = new THREE.Group();
+  const flesh = new THREE.MeshStandardMaterial({ color: 0x355427, emissive: 0x0b2107, roughness: .9 });
+  const core = new THREE.Mesh(new THREE.IcosahedronGeometry(.72 * scale, 2), flesh); core.position.y = .85 * scale; core.castShadow = true; group.add(core);
+  for (let i = 0; i < 5; i++) {
+    const limb = new THREE.Mesh(new THREE.CylinderGeometry(.08, .17, 1.2 * scale, 6), flesh);
+    limb.position.set(Math.sin(i * 1.25) * .48, .35, Math.cos(i * 1.25) * .48);
+    limb.rotation.z = Math.sin(i * 2) * .7; limb.rotation.x = Math.cos(i) * .8; group.add(limb);
+  }
+  const eye = new THREE.Mesh(new THREE.SphereGeometry(.15 * scale, 10, 8), new THREE.MeshBasicMaterial({ color: 0xff392f })); eye.position.set(0, 1, -.66 * scale); group.add(eye);
+  group.position.set(x, 0, z); group.userData = { hp: 2, phase: Math.random() * 9 }; scene.add(group); enemies.push(group);
+}
+spawnEnemy(-2.8, -8); spawnEnemy(2.4, -23, 1.15); spawnEnemy(-1.3, -40, .92); spawnEnemy(2.8, -55, 1.25);
+
+const keys = new Set();
+let playing = false, yaw = 0, pitch = -.15, ammo = 12, health = 100, lastShot = 0, messageTimer;
+const raycaster = new THREE.Raycaster();
+const clock = new THREE.Clock();
+
+function flash(text) {
+  message.textContent = text; message.classList.add('show'); clearTimeout(messageTimer);
+  messageTimer = setTimeout(() => message.classList.remove('show'), 900);
+}
+function reload() { if (ammo < 12) { ammo = 12; ammoEl.textContent = ammo; flash('CARICATORE INSERITO'); } }
+function shoot() {
+  const now = performance.now(); if (!playing || now - lastShot < 180) return;
+  if (!ammo) { flash('PREMI R PER RICARICARE'); return; }
+  lastShot = now; ammo--; ammoEl.textContent = ammo;
+  raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+  const hit = raycaster.intersectObjects(enemies, true)[0];
+  if (hit) {
+    let target = hit.object; while (target.parent && !enemies.includes(target)) target = target.parent;
+    if (enemies.includes(target)) {
+      target.userData.hp--; target.scale.multiplyScalar(.92); flash('BERSAGLIO COLPITO');
+      if (target.userData.hp <= 0) {
+        scene.remove(target); enemies.splice(enemies.indexOf(target), 1);
+        objective.textContent = enemies.length ? `Elimina le anomalie: ${enemies.length}` : 'Raggiungi la porta del settore −2';
+        if (!enemies.length) doorGlow.material.emissiveIntensity = 4;
+      }
+    }
+  }
+}
+
+document.querySelector('#start').addEventListener('click', () => { intro.classList.add('hidden'); hud.classList.remove('hidden'); playing = true; renderer.domElement.requestPointerLock(); });
+document.querySelector('#restart').addEventListener('click', () => location.reload());
+addEventListener('keydown', e => { keys.add(e.code); if (e.code === 'KeyR') reload(); });
+addEventListener('keyup', e => keys.delete(e.code));
+addEventListener('mousedown', e => { if (e.button === 0) shoot(); if (playing && document.pointerLockElement !== renderer.domElement) renderer.domElement.requestPointerLock(); });
+addEventListener('mousemove', e => { if (document.pointerLockElement === renderer.domElement && playing) { yaw -= e.movementX * .0022; pitch = THREE.MathUtils.clamp(pitch - e.movementY * .0015, -.48, .18); } });
+addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+
+function update(dt, time) {
+  if (!playing) return;
+  const forward = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
+  const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
+  const move = new THREE.Vector3();
+  if (keys.has('KeyW')) move.add(forward); if (keys.has('KeyS')) move.sub(forward);
+  if (keys.has('KeyD')) move.add(right); if (keys.has('KeyA')) move.sub(right);
+  if (move.lengthSq()) { move.normalize().multiplyScalar(dt * 5.2); player.position.add(move); }
+  player.position.x = THREE.MathUtils.clamp(player.position.x, -5.05, 5.05);
+  player.position.z = THREE.MathUtils.clamp(player.position.z, -66, 15);
+  player.rotation.y = yaw;
+  const camOffset = new THREE.Vector3(Math.sin(yaw) * 5.2, 3.5 + pitch * 3.5, Math.cos(yaw) * 5.2);
+  camera.position.lerp(player.position.clone().add(camOffset), 1 - Math.pow(.001, dt));
+  camera.lookAt(player.position.clone().add(new THREE.Vector3(0, 1.5 + pitch * 5, 0)).add(forward.multiplyScalar(7)));
+  alarmLight.intensity = 13 + Math.sin(time * 5) * 7;
+  for (const enemy of enemies) {
+    enemy.position.y = Math.sin(time * 2.4 + enemy.userData.phase) * .08;
+    enemy.lookAt(player.position.x, enemy.position.y, player.position.z);
+    const distance = enemy.position.distanceTo(player.position);
+    if (distance < 16) enemy.position.add(player.position.clone().sub(enemy.position).setY(0).normalize().multiplyScalar(dt * 1.05));
+    if (distance < 1.45) {
+      health = Math.max(0, health - dt * 14); healthText.textContent = Math.ceil(health); healthBar.style.width = `${health}%`;
+      if (!health) { playing = false; flash('SOGGETTO ABBATTUTO — RICARICA LA PAGINA'); }
+    }
+  }
+  if (!enemies.length && player.position.z < -63) { playing = false; document.exitPointerLock(); hud.classList.add('hidden'); end.classList.remove('hidden'); }
+}
+
+renderer.setAnimationLoop(() => { const dt = Math.min(clock.getDelta(), .04); update(dt, clock.elapsedTime); renderer.render(scene, camera); });

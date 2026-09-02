@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#030706" />
+    <title>S.E.C. — Level -25</title>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+    <link rel="stylesheet" href="./style.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <div id="game"></div>
+
+    <section id="intro" class="screen">
+      <div class="scanlines"></div>
+      <div class="brand">
+        <span class="classified">CLASSIFIED // CONTAINMENT FAILURE</span>
+        <h1>S.E.C.</h1>
+        <p>LEVEL <strong>−25</strong></p>
+        <button id="start">INIZIA PROTOCOLLO</button>
+        <small>Demo tecnica · Mouse + WASD · Click per sparare</small>
+      </div>
+    </section>
+
+    <div id="hud" class="hidden">
+      <div class="topbar">
+        <div><small>SETTORE</small><strong>−01 / ACCESSO</strong></div>
+        <div class="status"><i></i> CONTENIMENTO VIOLATO</div>
+      </div>
+      <div class="objective"><small>OBIETTIVO</small><span id="objective">Elimina le anomalie: 4</span></div>
+      <div class="crosshair"><span></span><span></span></div>
+      <div class="vitals">
+        <label>INTEGRITÀ <b id="healthText">100</b>%</label>
+        <div class="health"><i id="healthBar"></i></div>
+        <div class="ammo"><b id="ammo">12</b><span>/ ∞</span></div>
+      </div>
+      <div id="message"></div>
+      <div class="controls">WASD MUOVI · MOUSE MIRA · CLICK SPARA · R RICARICA</div>
+    </div>
+
+    <section id="end" class="screen hidden">
+      <div class="brand compact">
+        <span class="classified">SETTORE TEMPORANEAMENTE SICURO</span>
+        <h2>TRASMISSIONE RICEVUTA</h2>
+        <blockquote>“Se state leggendo questo messaggio, X-25 è già libero.”</blockquote>
+        <p class="signature">— Dr. Elias Voss, Registro 01/25</p>
+        <button id="restart">RIPETI LA MISSIONE</button>
+      </div>
+    </section>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>
