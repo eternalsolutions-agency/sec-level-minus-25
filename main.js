@@ -2,6 +2,7 @@ import * as THREE from 'three';
 
 const game = document.querySelector('#game');
 const intro = document.querySelector('#intro');
+const characterSelect = document.querySelector('#characterSelect');
 const hud = document.querySelector('#hud');
 const end = document.querySelector('#end');
 const objective = document.querySelector('#objective');
@@ -56,9 +57,11 @@ box(10, 5.5, .5, 0, 2.75, -69, darkMat);
 const doorGlow = box(3.8, 4.4, .18, 0, 2.2, -68.7, greenMat);
 
 const player = new THREE.Group();
-const body = new THREE.Mesh(new THREE.CapsuleGeometry(.48, 1.15, 6, 10), new THREE.MeshStandardMaterial({ color: 0x273a35, roughness: .65 }));
+const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0x273a35, roughness: .65 });
+const armorMaterial = new THREE.MeshStandardMaterial({ color: 0x15201d, metalness: .5 });
+const body = new THREE.Mesh(new THREE.CapsuleGeometry(.48, 1.15, 6, 10), bodyMaterial);
 body.position.y = 1.35; body.castShadow = true; player.add(body);
-const armor = new THREE.Mesh(new THREE.BoxGeometry(1.12, .85, .58), new THREE.MeshStandardMaterial({ color: 0x15201d, metalness: .5 }));
+const armor = new THREE.Mesh(new THREE.BoxGeometry(1.12, .85, .58), armorMaterial);
 armor.position.set(0, 1.7, .02); armor.castShadow = true; player.add(armor);
 const visor = new THREE.Mesh(new THREE.BoxGeometry(.65, .18, .5), greenMat); visor.position.set(0, 2.18, -.31); player.add(visor);
 const gun = new THREE.Mesh(new THREE.BoxGeometry(.18, .18, 1.15), darkMat); gun.position.set(.48, 1.58, -.6); player.add(gun);
@@ -80,7 +83,15 @@ function spawnEnemy(x, z, scale = 1) {
 spawnEnemy(-2.8, -8); spawnEnemy(2.4, -23, 1.15); spawnEnemy(-1.3, -40, .92); spawnEnemy(2.8, -55, 1.25);
 
 const keys = new Set();
-let playing = false, yaw = 0, pitch = -.15, ammo = 12, health = 100, lastShot = 0, messageTimer;
+const characters = {
+  tank: { name: 'JACK RYDER', deploy: 'SCHIERA JACK RYDER', health: 140, ammo: 10, speed: 5.0, damage: 2, fireRate: 270, body: 0x273a35, armor: 0x15201d, scale: 1.08 },
+  maya: { name: 'MAYA REYES', deploy: 'SCHIERA MAYA REYES', health: 100, ammo: 18, speed: 5.7, damage: 1, fireRate: 125, body: 0x245e67, armor: 0x172640, scale: .96 },
+  ghost: { name: 'NOAH KANE', deploy: 'SCHIERA NOAH KANE', health: 85, ammo: 12, speed: 7.0, damage: 1, fireRate: 170, body: 0x304b21, armor: 0x281839, scale: .92 },
+  chen: { name: 'DR. VICTOR CHEN', deploy: 'SCHIERA VICTOR CHEN', health: 110, ammo: 12, speed: 5.3, damage: 1, fireRate: 180, body: 0x66706b, armor: 0x254641, scale: 1 }
+};
+let selectedKey = 'tank';
+let selectedCharacter = characters[selectedKey];
+let playing = false, yaw = 0, pitch = -.15, ammo = selectedCharacter.ammo, health = selectedCharacter.health, lastShot = 0, messageTimer;
 const touchMove = new THREE.Vector2();
 const raycaster = new THREE.Raycaster();
 const clock = new THREE.Clock();
@@ -89,9 +100,9 @@ function flash(text) {
   message.textContent = text; message.classList.add('show'); clearTimeout(messageTimer);
   messageTimer = setTimeout(() => message.classList.remove('show'), 900);
 }
-function reload() { if (ammo < 12) { ammo = 12; ammoEl.textContent = ammo; flash('CARICATORE INSERITO'); } }
+function reload() { if (ammo < selectedCharacter.ammo) { ammo = selectedCharacter.ammo; ammoEl.textContent = ammo; flash('CARICATORE INSERITO'); } }
 function shoot() {
-  const now = performance.now(); if (!playing || now - lastShot < 180) return;
+  const now = performance.now(); if (!playing || now - lastShot < selectedCharacter.fireRate) return;
   if (!ammo) { flash('PREMI R PER RICARICARE'); return; }
   lastShot = now; ammo--; ammoEl.textContent = ammo;
   raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
@@ -99,7 +110,7 @@ function shoot() {
   if (hit) {
     let target = hit.object; while (target.parent && !enemies.includes(target)) target = target.parent;
     if (enemies.includes(target)) {
-      target.userData.hp--; target.scale.multiplyScalar(.92); flash('BERSAGLIO COLPITO');
+      target.userData.hp -= selectedCharacter.damage; target.scale.multiplyScalar(.92); flash('BERSAGLIO COLPITO');
       if (target.userData.hp <= 0) {
         scene.remove(target); enemies.splice(enemies.indexOf(target), 1);
         objective.textContent = enemies.length ? `Elimina le anomalie: ${enemies.length}` : 'Raggiungi la porta del settore −2';
@@ -109,8 +120,19 @@ function shoot() {
   }
 }
 
-document.querySelector('#start').addEventListener('click', () => {
-  intro.classList.add('hidden'); hud.classList.remove('hidden'); playing = true;
+document.querySelector('#start').addEventListener('click', () => { intro.classList.add('hidden'); characterSelect.classList.remove('hidden'); });
+document.querySelectorAll('.character-card').forEach(card => card.addEventListener('click', () => {
+  document.querySelectorAll('.character-card').forEach(item => item.classList.remove('selected'));
+  card.classList.add('selected'); selectedKey = card.dataset.character; selectedCharacter = characters[selectedKey];
+  document.querySelector('#deployAgent').textContent = selectedCharacter.deploy;
+}));
+document.querySelector('#deployAgent').addEventListener('click', () => {
+  characterSelect.classList.add('hidden'); hud.classList.remove('hidden'); playing = true;
+  health = selectedCharacter.health; ammo = selectedCharacter.ammo;
+  healthText.textContent = health; healthBar.style.width = '100%'; ammoEl.textContent = ammo;
+  document.querySelector('#agentName').textContent = `${selectedCharacter.name} // SETTORE`;
+  bodyMaterial.color.setHex(selectedCharacter.body); armorMaterial.color.setHex(selectedCharacter.armor);
+  player.scale.setScalar(selectedCharacter.scale);
   if (!isTouch) renderer.domElement.requestPointerLock();
 });
 document.querySelector('#restart').addEventListener('click', () => location.reload());
@@ -160,7 +182,7 @@ function update(dt, time) {
   if (keys.has('KeyW')) move.add(forward); if (keys.has('KeyS')) move.sub(forward);
   if (keys.has('KeyD')) move.add(right); if (keys.has('KeyA')) move.sub(right);
   if (touchMove.lengthSq() > .02) move.add(right.clone().multiplyScalar(touchMove.x)).add(forward.clone().multiplyScalar(-touchMove.y));
-  if (move.lengthSq()) { move.normalize().multiplyScalar(dt * 5.2); player.position.add(move); }
+  if (move.lengthSq()) { move.normalize().multiplyScalar(dt * selectedCharacter.speed); player.position.add(move); }
   player.position.x = THREE.MathUtils.clamp(player.position.x, -5.05, 5.05);
   player.position.z = THREE.MathUtils.clamp(player.position.z, -66, 15);
   player.rotation.y = yaw;
@@ -174,9 +196,14 @@ function update(dt, time) {
     const distance = enemy.position.distanceTo(player.position);
     if (distance < 16) enemy.position.add(player.position.clone().sub(enemy.position).setY(0).normalize().multiplyScalar(dt * 1.05));
     if (distance < 1.45) {
-      health = Math.max(0, health - dt * 14); healthText.textContent = Math.ceil(health); healthBar.style.width = `${health}%`;
+      health = Math.max(0, health - dt * 14);
+      healthText.textContent = Math.ceil(health); healthBar.style.width = `${health / selectedCharacter.health * 100}%`;
       if (!health) { playing = false; flash('SOGGETTO ABBATTUTO — RICARICA LA PAGINA'); }
     }
+  }
+  if (selectedKey === 'chen' && health > 0 && health < selectedCharacter.health) {
+    health = Math.min(selectedCharacter.health, health + dt * 1.5);
+    healthText.textContent = Math.ceil(health); healthBar.style.width = `${health / selectedCharacter.health * 100}%`;
   }
   if (!enemies.length && player.position.z < -63) { playing = false; document.exitPointerLock(); hud.classList.add('hidden'); end.classList.remove('hidden'); }
 }

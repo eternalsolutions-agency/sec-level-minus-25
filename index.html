@@ -24,14 +24,41 @@
         <span class="classified">CLASSIFIED // CONTAINMENT FAILURE</span>
         <h1>S.E.C.</h1>
         <p>LEVEL <strong>−25</strong></p>
-        <button id="start">INIZIA PROTOCOLLO</button>
+        <button id="start">SELEZIONA AGENTE</button>
         <small>Demo tecnica · Mouse + WASD · Click per sparare</small>
+      </div>
+    </section>
+
+    <section id="characterSelect" class="screen hidden">
+      <div class="selection-panel">
+        <span class="classified">S.E.C. // SQUADRA DI RECUPERO</span>
+        <h2>SCEGLI IL TUO AGENTE</h2>
+        <p>Ogni agente cambia realmente il modo di affrontare la missione.</p>
+        <div class="character-grid">
+          <button class="character-card selected" data-character="tank">
+            <i class="portrait tank">JR</i><strong>JACK “TANK” RYDER</strong><small>ASSALTO</small>
+            <span>Salute 140 · Danno alto</span><em>ARMATURA RINFORZATA</em>
+          </button>
+          <button class="character-card" data-character="maya">
+            <i class="portrait maya">MR</i><strong>MAYA REYES</strong><small>INGEGNERE</small>
+            <span>Caricatore 18 · Fuoco rapido</span><em>SCANNER TECNICO</em>
+          </button>
+          <button class="character-card" data-character="ghost">
+            <i class="portrait ghost">NK</i><strong>NOAH “GHOST” KANE</strong><small>RICOGNITORE</small>
+            <span>Velocità massima · Salute 85</span><em>DNA ALTERATO</em>
+          </button>
+          <button class="character-card" data-character="chen">
+            <i class="portrait chen">VC</i><strong>DR. VICTOR CHEN</strong><small>BIOLOGO</small>
+            <span>Salute 110 · Rigenerazione</span><em>ANALISI BIOLOGICA</em>
+          </button>
+        </div>
+        <button id="deployAgent">SCHIERA JACK RYDER</button>
       </div>
     </section>
 
     <div id="hud" class="hidden">
       <div class="topbar">
-        <div><small>SETTORE</small><strong>−01 / ACCESSO</strong></div>
+        <div><small id="agentName">JACK RYDER // SETTORE</small><strong>−01 / ACCESSO</strong></div>
         <div class="status"><i></i> CONTENIMENTO VIOLATO</div>
       </div>
       <div class="objective"><small>OBIETTIVO</small><span id="objective">Elimina le anomalie: 4</span></div>

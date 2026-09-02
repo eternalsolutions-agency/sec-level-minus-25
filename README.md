@@ -11,6 +11,7 @@ Prima vertical slice gratuita del gioco sparatutto horror fantascientifico in te
 - HUD, salute, munizioni, obiettivo e breve rivelazione narrativa;
 - comandi touch per smartphone e tablet in modalità orizzontale;
 - qualità di rendering ridotta automaticamente sui dispositivi mobili;
+- selezione di quattro agenti con statistiche e stile di gioco differenti;
 - nessun database, account o servizio a pagamento.
 
 ## Avvio locale
@@ -28,6 +29,13 @@ Aprire quindi l'indirizzo mostrato nel terminale.
 - Computer: WASD, mouse, click sinistro e R.
 - Smartphone/tablet: joystick sinistro, trascinamento a destra, pulsanti SPARA e R.
 - Sui dispositivi mobili è consigliata la modalità orizzontale.
+
+## Agenti disponibili
+
+- Jack “Tank” Ryder: più salute e danno doppio, ma fuoco più lento.
+- Maya Reyes: caricatore da 18 colpi e fuoco rapido.
+- Noah “Ghost” Kane: velocità massima, ma salute ridotta.
+- Dr. Victor Chen: rigenerazione lenta della salute.
 
 ## Pubblicazione gratuita
 

@@ -55,6 +55,22 @@ small { color: #719181; letter-spacing: .1em; }
 #rotateDevice small { max-width: 290px; }
 @media (pointer: coarse) and (orientation: portrait) { #rotateDevice { display: grid; } }
 .compact h2 { font: 700 2.2rem 'Chakra Petch'; letter-spacing: .12em; }
+.selection-panel { position: relative; width: min(94vw, 1040px); padding: 30px; text-align: center; background: #06100df2; border: 1px solid #42ff9a44; box-shadow: 0 0 70px #0aff761b; }
+.selection-panel h2 { margin: 9px 0 0; font: 700 clamp(1.7rem, 4vw, 2.5rem) 'Chakra Petch'; letter-spacing: .11em; }
+.selection-panel > p { margin: 4px 0 20px; color: #719181; }
+.character-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.character-card { display: grid; justify-items: center; gap: 5px; min-height: 255px; margin: 0; padding: 16px 10px; color: #b8d2c5; border: 1px solid #29483a; background: #07120f; box-shadow: none; clip-path: none; letter-spacing: normal; }
+.character-card:hover, .character-card.selected { color: #effff7; border-color: #42ff9a; background: #0c2118; transform: translateY(-3px); box-shadow: 0 0 24px #42ff9a22; }
+.portrait { display: grid; place-items: center; width: 88px; height: 104px; font: 700 2rem 'Chakra Petch'; font-style: normal; color: #07100c; background: linear-gradient(145deg, #6e9a82, #233d31); clip-path: polygon(18% 0, 100% 0, 100% 82%, 80% 100%, 0 100%, 0 18%); }
+.portrait.tank { background: linear-gradient(145deg, #b38a62, #405346); }
+.portrait.maya { background: linear-gradient(145deg, #76d6ce, #32456d); }
+.portrait.ghost { background: linear-gradient(145deg, #b2ff78, #3f245a); }
+.portrait.chen { background: linear-gradient(145deg, #dad7c7, #47726c); }
+.character-card strong { min-height: 38px; font: 700 .9rem 'Chakra Petch'; }
+.character-card small { color: #42ff9a; }
+.character-card span { font: 500 .77rem 'Rajdhani'; }
+.character-card em { margin-top: 5px; color: #ff9e62; font: 600 .7rem 'Chakra Petch'; }
+#deployAgent { margin: 22px auto 0; }
 blockquote { margin: 35px auto 8px; font-size: 1.45rem; color: #dffff0; }
 .signature { font-size: 1rem !important; letter-spacing: .05em !important; color: #719181 !important; }
 @keyframes pulse { 50% { opacity: .25; } }
@@ -62,6 +78,15 @@ blockquote { margin: 35px auto 8px; font-size: 1.45rem; color: #dffff0; }
 @keyframes rotateHint { 50% { transform: rotate(90deg); } }
 @media (max-width: 700px) { .brand { padding: 36px 22px; } .controls { display: none; } .topbar { left: 14px; right: 14px; } .objective { left: 14px; } .vitals { left: 14px; } }
 @media (pointer: coarse) and (orientation: landscape) and (max-height: 520px) {
+  .selection-panel { padding: 10px 18px; }
+  .selection-panel h2 { font-size: 1.3rem; }
+  .selection-panel > p { display: none; }
+  .character-grid { gap: 7px; }
+  .character-card { min-height: 164px; padding: 7px; gap: 2px; }
+  .portrait { width: 56px; height: 58px; font-size: 1.2rem; }
+  .character-card strong { min-height: 27px; font-size: .65rem; }
+  .character-card span, .character-card em { font-size: .58rem; }
+  #deployAgent { margin-top: 8px; padding: 8px 18px; }
   .topbar { top: 10px; }
   .topbar div:first-child small { display: none; }
   .objective { top: 48px; padding: 7px 12px; }
