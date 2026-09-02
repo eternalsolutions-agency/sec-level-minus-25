@@ -9,6 +9,8 @@ Prima vertical slice gratuita del gioco sparatutto horror fantascientifico in te
 - mira con il mouse, movimento WASD, sparo e ricarica;
 - quattro anomalie biologiche;
 - HUD, salute, munizioni, obiettivo e breve rivelazione narrativa;
+- comandi touch per smartphone e tablet in modalità orizzontale;
+- qualità di rendering ridotta automaticamente sui dispositivi mobili;
 - nessun database, account o servizio a pagamento.
 
 ## Avvio locale
@@ -20,6 +22,12 @@ npx serve .
 ```
 
 Aprire quindi l'indirizzo mostrato nel terminale.
+
+## Comandi
+
+- Computer: WASD, mouse, click sinistro e R.
+- Smartphone/tablet: joystick sinistro, trascinamento a destra, pulsanti SPARA e R.
+- Sui dispositivi mobili è consigliata la modalità orizzontale.
 
 ## Pubblicazione gratuita
 

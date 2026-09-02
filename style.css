@@ -38,9 +38,36 @@ small { color: #719181; letter-spacing: .1em; }
 .controls { position: absolute; bottom: 22px; right: 28px; color: #719181; font-size: .75rem; letter-spacing: .08em; }
 #message { position: absolute; left: 50%; bottom: 21%; transform: translateX(-50%); color: #42ff9a; letter-spacing: .15em; opacity: 0; transition: opacity .25s; }
 #message.show { opacity: 1; }
+#touchControls, #rotateDevice { display: none; }
+.touch-device #touchControls { display: block; position: absolute; inset: 0; }
+#lookZone { position: absolute; top: 0; right: 0; width: 58%; height: 100%; pointer-events: auto; touch-action: none; }
+#joystick { position: absolute; left: 34px; bottom: 40px; width: 116px; height: 116px; border: 2px solid #79ffb866; border-radius: 50%; background: #06110dbb; box-shadow: inset 0 0 24px #42ff9a20; pointer-events: auto; touch-action: none; }
+#stick { position: absolute; left: 33px; top: 33px; width: 46px; height: 46px; border: 2px solid #b9ffda; border-radius: 50%; background: #42ff9a55; box-shadow: 0 0 18px #42ff9a66; }
+#fireButton, #reloadButton { position: absolute; z-index: 2; margin: 0; border-radius: 50%; pointer-events: auto; touch-action: manipulation; color: #eafff4; background: #143d2dbb; }
+#fireButton { right: 32px; bottom: 32px; width: 88px; height: 88px; padding: 0; font-size: .78rem; }
+#reloadButton { right: 132px; bottom: 104px; width: 48px; height: 48px; padding: 0; color: #42ff9a; background: #07120fdd; }
+.touch-device .controls { display: none; }
+.touch-device .vitals { bottom: 18px; left: 176px; transform: scale(.82); transform-origin: left bottom; }
+.touch-device .objective { top: 65px; }
+#rotateDevice { position: fixed; inset: 0; z-index: 30; place-items: center; align-content: center; gap: 12px; text-align: center; background: #020705; font-family: 'Chakra Petch'; }
+#rotateDevice span { color: #42ff9a; font-size: 4rem; animation: rotateHint 1.7s ease-in-out infinite; }
+#rotateDevice strong { letter-spacing: .15em; }
+#rotateDevice small { max-width: 290px; }
+@media (pointer: coarse) and (orientation: portrait) { #rotateDevice { display: grid; } }
 .compact h2 { font: 700 2.2rem 'Chakra Petch'; letter-spacing: .12em; }
 blockquote { margin: 35px auto 8px; font-size: 1.45rem; color: #dffff0; }
 .signature { font-size: 1rem !important; letter-spacing: .05em !important; color: #719181 !important; }
 @keyframes pulse { 50% { opacity: .25; } }
 @keyframes sweep { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+@keyframes rotateHint { 50% { transform: rotate(90deg); } }
 @media (max-width: 700px) { .brand { padding: 36px 22px; } .controls { display: none; } .topbar { left: 14px; right: 14px; } .objective { left: 14px; } .vitals { left: 14px; } }
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 520px) {
+  .topbar { top: 10px; }
+  .topbar div:first-child small { display: none; }
+  .objective { top: 48px; padding: 7px 12px; }
+  .objective small { display: none; }
+  #joystick { left: 24px; bottom: 22px; width: 104px; height: 104px; }
+  #stick { left: 29px; top: 29px; }
+  #fireButton { right: 24px; bottom: 20px; width: 78px; height: 78px; }
+  #reloadButton { right: 112px; bottom: 88px; }
+}

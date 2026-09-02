@@ -9,6 +9,8 @@ const ammoEl = document.querySelector('#ammo');
 const healthText = document.querySelector('#healthText');
 const healthBar = document.querySelector('#healthBar');
 const message = document.querySelector('#message');
+const isTouch = matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
+if (isTouch) document.body.classList.add('touch-device');
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x020605);
@@ -16,7 +18,7 @@ scene.fog = new THREE.FogExp2(0x06100c, 0.027);
 const camera = new THREE.PerspectiveCamera(66, innerWidth / innerHeight, 0.1, 160);
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
 renderer.setSize(innerWidth, innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(devicePixelRatio, isTouch ? 1.35 : 2));
 renderer.shadowMap.enabled = true;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 game.appendChild(renderer.domElement);
@@ -79,6 +81,7 @@ spawnEnemy(-2.8, -8); spawnEnemy(2.4, -23, 1.15); spawnEnemy(-1.3, -40, .92); sp
 
 const keys = new Set();
 let playing = false, yaw = 0, pitch = -.15, ammo = 12, health = 100, lastShot = 0, messageTimer;
+const touchMove = new THREE.Vector2();
 const raycaster = new THREE.Raycaster();
 const clock = new THREE.Clock();
 
@@ -106,13 +109,48 @@ function shoot() {
   }
 }
 
-document.querySelector('#start').addEventListener('click', () => { intro.classList.add('hidden'); hud.classList.remove('hidden'); playing = true; renderer.domElement.requestPointerLock(); });
+document.querySelector('#start').addEventListener('click', () => {
+  intro.classList.add('hidden'); hud.classList.remove('hidden'); playing = true;
+  if (!isTouch) renderer.domElement.requestPointerLock();
+});
 document.querySelector('#restart').addEventListener('click', () => location.reload());
 addEventListener('keydown', e => { keys.add(e.code); if (e.code === 'KeyR') reload(); });
 addEventListener('keyup', e => keys.delete(e.code));
-addEventListener('mousedown', e => { if (e.button === 0) shoot(); if (playing && document.pointerLockElement !== renderer.domElement) renderer.domElement.requestPointerLock(); });
+addEventListener('mousedown', e => {
+  if (isTouch) return;
+  if (e.button === 0) shoot();
+  if (playing && document.pointerLockElement !== renderer.domElement) renderer.domElement.requestPointerLock();
+});
 addEventListener('mousemove', e => { if (document.pointerLockElement === renderer.domElement && playing) { yaw -= e.movementX * .0022; pitch = THREE.MathUtils.clamp(pitch - e.movementY * .0015, -.48, .18); } });
 addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+
+const joystick = document.querySelector('#joystick');
+const stick = document.querySelector('#stick');
+const lookZone = document.querySelector('#lookZone');
+let joystickTouch = null, lookTouch = null, lookX = 0, lookY = 0;
+function updateJoystick(touch) {
+  const rect = joystick.getBoundingClientRect();
+  let x = touch.clientX - (rect.left + rect.width / 2);
+  let y = touch.clientY - (rect.top + rect.height / 2);
+  const max = rect.width * .34, length = Math.hypot(x, y) || 1;
+  if (length > max) { x *= max / length; y *= max / length; }
+  touchMove.set(x / max, y / max);
+  stick.style.transform = `translate(${x}px, ${y}px)`;
+}
+joystick.addEventListener('touchstart', e => { const t = e.changedTouches[0]; joystickTouch = t.identifier; updateJoystick(t); e.preventDefault(); }, { passive: false });
+joystick.addEventListener('touchmove', e => { const t = [...e.changedTouches].find(v => v.identifier === joystickTouch); if (t) updateJoystick(t); e.preventDefault(); }, { passive: false });
+function stopJoystick(e) { if ([...e.changedTouches].some(v => v.identifier === joystickTouch)) { joystickTouch = null; touchMove.set(0, 0); stick.style.transform = ''; } }
+joystick.addEventListener('touchend', stopJoystick); joystick.addEventListener('touchcancel', stopJoystick);
+lookZone.addEventListener('touchstart', e => { const t = e.changedTouches[0]; lookTouch = t.identifier; lookX = t.clientX; lookY = t.clientY; e.preventDefault(); }, { passive: false });
+lookZone.addEventListener('touchmove', e => {
+  const t = [...e.changedTouches].find(v => v.identifier === lookTouch); if (!t) return;
+  yaw -= (t.clientX - lookX) * .006; pitch = THREE.MathUtils.clamp(pitch - (t.clientY - lookY) * .004, -.48, .18);
+  lookX = t.clientX; lookY = t.clientY; e.preventDefault();
+}, { passive: false });
+function stopLook(e) { if ([...e.changedTouches].some(v => v.identifier === lookTouch)) lookTouch = null; }
+lookZone.addEventListener('touchend', stopLook); lookZone.addEventListener('touchcancel', stopLook);
+document.querySelector('#fireButton').addEventListener('pointerdown', e => { e.preventDefault(); shoot(); });
+document.querySelector('#reloadButton').addEventListener('pointerdown', e => { e.preventDefault(); reload(); });
 
 function update(dt, time) {
   if (!playing) return;
@@ -121,6 +159,7 @@ function update(dt, time) {
   const move = new THREE.Vector3();
   if (keys.has('KeyW')) move.add(forward); if (keys.has('KeyS')) move.sub(forward);
   if (keys.has('KeyD')) move.add(right); if (keys.has('KeyA')) move.sub(right);
+  if (touchMove.lengthSq() > .02) move.add(right.clone().multiplyScalar(touchMove.x)).add(forward.clone().multiplyScalar(-touchMove.y));
   if (move.lengthSq()) { move.normalize().multiplyScalar(dt * 5.2); player.position.add(move); }
   player.position.x = THREE.MathUtils.clamp(player.position.x, -5.05, 5.05);
   player.position.z = THREE.MathUtils.clamp(player.position.z, -66, 15);
