@@ -12,6 +12,8 @@ Prima vertical slice gratuita del gioco sparatutto horror fantascientifico in te
 - comandi touch per smartphone e tablet in modalità orizzontale;
 - qualità di rendering ridotta automaticamente sui dispositivi mobili;
 - selezione di quattro agenti con statistiche e stile di gioco differenti;
+- ritratti concept dei quattro agenti approvati;
+- audio procedurale per menu, generatori, gocce, metallo, spari e annunci del bunker;
 - nessun database, account o servizio a pagamento.
 
 ## Avvio locale
@@ -36,6 +38,10 @@ Aprire quindi l'indirizzo mostrato nel terminale.
 - Maya Reyes: caricatore da 18 colpi e fuoco rapido.
 - Noah “Ghost” Kane: velocità massima, ma salute ridotta.
 - Dr. Victor Chen: rigenerazione lenta della salute.
+
+## Antagonista
+
+Il responsabile degli esperimenti e autore dei registri è il Dr. Crowther.
 
 ## Pubblicazione gratuita
 

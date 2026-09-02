@@ -96,6 +96,60 @@ const touchMove = new THREE.Vector2();
 const raycaster = new THREE.Raycaster();
 const clock = new THREE.Clock();
 
+// Audio procedurale: nessun file esterno e nessun costo di licenza.
+let audioContext, masterGain, menuGain, gameGain, audioEnabled = true, ambienceTimer;
+function createTone(type, frequency, gainValue, destination) {
+  const oscillator = audioContext.createOscillator();
+  const gain = audioContext.createGain();
+  oscillator.type = type; oscillator.frequency.value = frequency; gain.gain.value = gainValue;
+  oscillator.connect(gain).connect(destination); oscillator.start(); return { oscillator, gain };
+}
+function initAudio() {
+  if (audioContext) { audioContext.resume(); return; }
+  audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  masterGain = audioContext.createGain(); menuGain = audioContext.createGain(); gameGain = audioContext.createGain();
+  masterGain.gain.value = .52; menuGain.gain.value = .8; gameGain.gain.value = 0;
+  menuGain.connect(masterGain); gameGain.connect(masterGain); masterGain.connect(audioContext.destination);
+  const menuBass = createTone('sine', 48, .045, menuGain);
+  const menuAir = createTone('triangle', 96, .014, menuGain);
+  const menuLfo = audioContext.createOscillator(), menuLfoGain = audioContext.createGain();
+  menuLfo.frequency.value = .08; menuLfoGain.gain.value = 11; menuLfo.connect(menuLfoGain).connect(menuAir.oscillator.frequency); menuLfo.start();
+  createTone('sawtooth', 33, .028, gameGain); createTone('sine', 60, .02, gameGain);
+}
+function switchToGameAudio() {
+  initAudio(); const now = audioContext.currentTime;
+  menuGain.gain.cancelScheduledValues(now); gameGain.gain.cancelScheduledValues(now);
+  menuGain.gain.linearRampToValueAtTime(.08, now + 1.5); gameGain.gain.linearRampToValueAtTime(.9, now + 1.5);
+  clearInterval(ambienceTimer); ambienceTimer = setInterval(randomAmbience, 3700);
+  setTimeout(() => bunkerAnnouncement('Attenzione. Violazione del contenimento rilevata nel settore biologico sette.'), 1300);
+}
+function oneShot(frequency, duration, volume, type = 'sine', destination = gameGain) {
+  if (!audioContext || !audioEnabled) return;
+  const now = audioContext.currentTime, oscillator = audioContext.createOscillator(), gain = audioContext.createGain();
+  oscillator.type = type; oscillator.frequency.setValueAtTime(frequency, now); oscillator.frequency.exponentialRampToValueAtTime(Math.max(20, frequency * .45), now + duration);
+  gain.gain.setValueAtTime(volume, now); gain.gain.exponentialRampToValueAtTime(.0001, now + duration);
+  oscillator.connect(gain).connect(destination); oscillator.start(now); oscillator.stop(now + duration);
+}
+function randomAmbience() {
+  if (!playing || !audioEnabled) return;
+  const roll = Math.random();
+  if (roll < .4) oneShot(520 + Math.random() * 220, .18, .035, 'sine');
+  else if (roll < .72) oneShot(75 + Math.random() * 40, 1.5, .035, 'sawtooth');
+  else if (roll < .9) oneShot(1200, .55, .018, 'square');
+  else bunkerAnnouncement('Movimento non identificato nei condotti di ventilazione.');
+}
+function bunkerAnnouncement(text) {
+  if (!audioEnabled || !('speechSynthesis' in window)) return;
+  speechSynthesis.cancel(); const voice = new SpeechSynthesisUtterance(text);
+  voice.lang = 'it-IT'; voice.rate = .78; voice.pitch = .55; voice.volume = .42; speechSynthesis.speak(voice);
+}
+function toggleAudio() {
+  initAudio(); audioEnabled = !audioEnabled;
+  masterGain.gain.setTargetAtTime(audioEnabled ? .52 : 0, audioContext.currentTime, .08);
+  document.querySelector('#audioToggle').textContent = audioEnabled ? 'AUDIO ON' : 'AUDIO OFF';
+  if (!audioEnabled && 'speechSynthesis' in window) speechSynthesis.cancel();
+}
+
 function flash(text) {
   message.textContent = text; message.classList.add('show'); clearTimeout(messageTimer);
   messageTimer = setTimeout(() => message.classList.remove('show'), 900);
@@ -104,7 +158,7 @@ function reload() { if (ammo < selectedCharacter.ammo) { ammo = selectedCharacte
 function shoot() {
   const now = performance.now(); if (!playing || now - lastShot < selectedCharacter.fireRate) return;
   if (!ammo) { flash('PREMI R PER RICARICARE'); return; }
-  lastShot = now; ammo--; ammoEl.textContent = ammo;
+  lastShot = now; ammo--; ammoEl.textContent = ammo; oneShot(selectedKey === 'tank' ? 78 : 135, .14, .13, 'square');
   raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
   const hit = raycaster.intersectObjects(enemies, true)[0];
   if (hit) {
@@ -120,7 +174,7 @@ function shoot() {
   }
 }
 
-document.querySelector('#start').addEventListener('click', () => { intro.classList.add('hidden'); characterSelect.classList.remove('hidden'); });
+document.querySelector('#start').addEventListener('click', () => { initAudio(); intro.classList.add('hidden'); characterSelect.classList.remove('hidden'); });
 document.querySelectorAll('.character-card').forEach(card => card.addEventListener('click', () => {
   document.querySelectorAll('.character-card').forEach(item => item.classList.remove('selected'));
   card.classList.add('selected'); selectedKey = card.dataset.character; selectedCharacter = characters[selectedKey];
@@ -133,8 +187,10 @@ document.querySelector('#deployAgent').addEventListener('click', () => {
   document.querySelector('#agentName').textContent = `${selectedCharacter.name} // SETTORE`;
   bodyMaterial.color.setHex(selectedCharacter.body); armorMaterial.color.setHex(selectedCharacter.armor);
   player.scale.setScalar(selectedCharacter.scale);
+  switchToGameAudio();
   if (!isTouch) renderer.domElement.requestPointerLock();
 });
+document.querySelector('#audioToggle').addEventListener('click', e => { e.stopPropagation(); toggleAudio(); });
 document.querySelector('#restart').addEventListener('click', () => location.reload());
 addEventListener('keydown', e => { keys.add(e.code); if (e.code === 'KeyR') reload(); });
 addEventListener('keyup', e => keys.delete(e.code));
