@@ -40,6 +40,8 @@ small { color: #719181; letter-spacing: .1em; }
 .controls { position: absolute; bottom: 22px; right: 28px; color: #719181; font-size: .75rem; letter-spacing: .08em; }
 #message { position: absolute; left: 50%; bottom: 21%; transform: translateX(-50%); color: #42ff9a; letter-spacing: .15em; opacity: 0; transition: opacity .25s; }
 #message.show { opacity: 1; }
+#modelStatus { position: absolute; top: 50%; left: 50%; padding: 9px 14px; color: #42ff9a; background: #020806dd; border: 1px solid #42ff9a55; font-size: .72rem; letter-spacing: .12em; transform: translate(-50%, 45px); opacity: 0; transition: opacity .25s; }
+#modelStatus.show { opacity: 1; }
 #touchControls, #rotateDevice { display: none; }
 .touch-device #touchControls { display: block; position: absolute; inset: 0; }
 #lookZone { position: absolute; top: 0; right: 0; width: 58%; height: 100%; pointer-events: auto; touch-action: none; }

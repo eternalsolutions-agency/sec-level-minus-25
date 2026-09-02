@@ -10,7 +10,8 @@
     <script type="importmap">
       {
         "imports": {
-          "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js"
+          "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"
         }
       }
     </script>
@@ -71,6 +72,7 @@
         <div class="ammo"><b id="ammo">12</b><span>/ ∞</span></div>
       </div>
       <div id="message"></div>
+      <div id="modelStatus">CARICAMENTO AGENTE 3D…</div>
       <div class="controls">WASD MUOVI · MOUSE MIRA · CLICK SPARA · R RICARICA</div>
       <div id="touchControls">
         <div id="joystick" aria-label="Joystick di movimento"><i id="stick"></i></div>

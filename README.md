@@ -16,6 +16,7 @@ Prima vertical slice gratuita del gioco sparatutto horror fantascientifico in te
 - audio procedurale per menu, generatori, gocce, metallo, spari e annunci del bunker;
 - menu operativo ridisegnato con personaggio intero, animazione e statistiche;
 - musica melodrammatica originale e rumori ambientali intermittenti direzionali;
+- primo personaggio 3D animato: Jack usa il modello Soldier con 24 animazioni;
 - nessun database, account o servizio a pagamento.
 
 ## Avvio locale

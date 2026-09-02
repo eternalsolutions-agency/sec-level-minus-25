@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 const game = document.querySelector('#game');
 const intro = document.querySelector('#intro');
@@ -65,7 +66,40 @@ const armor = new THREE.Mesh(new THREE.BoxGeometry(1.12, .85, .58), armorMateria
 armor.position.set(0, 1.7, .02); armor.castShadow = true; player.add(armor);
 const visor = new THREE.Mesh(new THREE.BoxGeometry(.65, .18, .5), greenMat); visor.position.set(0, 2.18, -.31); player.add(visor);
 const gun = new THREE.Mesh(new THREE.BoxGeometry(.18, .18, 1.15), darkMat); gun.position.set(.48, 1.58, -.6); player.add(gun);
+const fallbackParts = [body, armor, visor, gun];
 player.position.set(0, 0, 12); scene.add(player);
+
+let jackModel = null, jackMixer = null, currentJackAction = null;
+const jackActions = {};
+function setFallbackVisible(visible) { fallbackParts.forEach(part => { part.visible = visible; }); }
+function playJackAction(name) {
+  const next = jackActions[name] || jackActions.Idle_Gun || jackActions.Idle;
+  if (!next || next === currentJackAction) return;
+  next.reset().fadeIn(.16).play();
+  if (currentJackAction) currentJackAction.fadeOut(.16);
+  currentJackAction = next;
+}
+new GLTFLoader().load('./assets/models/jack-soldier.gltf', gltf => {
+  jackModel = gltf.scene;
+  jackModel.traverse(child => { if (child.isMesh) { child.castShadow = true; child.receiveShadow = true; } });
+  const initialBox = new THREE.Box3().setFromObject(jackModel);
+  const initialHeight = initialBox.getSize(new THREE.Vector3()).y || 1;
+  jackModel.scale.setScalar(2.72 / initialHeight);
+  jackModel.updateMatrixWorld(true);
+  const adjustedBox = new THREE.Box3().setFromObject(jackModel);
+  jackModel.position.y = -adjustedBox.min.y;
+  jackModel.rotation.y = Math.PI;
+  jackModel.visible = selectedKey === 'tank' && playing;
+  player.add(jackModel);
+  jackMixer = new THREE.AnimationMixer(jackModel);
+  gltf.animations.forEach(clip => { jackActions[clip.name] = jackMixer.clipAction(clip); });
+  playJackAction('Idle_Gun');
+  if (selectedKey === 'tank' && playing) setFallbackVisible(false);
+  document.querySelector('#modelStatus').classList.remove('show');
+}, undefined, error => {
+  console.error('Impossibile caricare Jack 3D', error);
+  document.querySelector('#modelStatus').textContent = 'MODELLO 3D NON DISPONIBILE';
+});
 
 const enemies = [];
 function spawnEnemy(x, z, scale = 1) {
@@ -220,6 +254,10 @@ document.querySelector('#deployAgent').addEventListener('click', () => {
   document.querySelector('#agentName').textContent = `${selectedCharacter.shortName} // SETTORE`;
   bodyMaterial.color.setHex(selectedCharacter.body); armorMaterial.color.setHex(selectedCharacter.armor);
   player.scale.setScalar(selectedCharacter.scale);
+  const useJack3D = selectedKey === 'tank' && jackModel;
+  setFallbackVisible(!useJack3D);
+  if (jackModel) jackModel.visible = selectedKey === 'tank';
+  if (selectedKey === 'tank' && !jackModel) document.querySelector('#modelStatus').classList.add('show');
   switchToGameAudio();
   if (!isTouch) renderer.domElement.requestPointerLock();
 });
@@ -271,10 +309,16 @@ function update(dt, time) {
   if (keys.has('KeyW')) move.add(forward); if (keys.has('KeyS')) move.sub(forward);
   if (keys.has('KeyD')) move.add(right); if (keys.has('KeyA')) move.sub(right);
   if (touchMove.lengthSq() > .02) move.add(right.clone().multiplyScalar(touchMove.x)).add(forward.clone().multiplyScalar(-touchMove.y));
-  if (move.lengthSq()) { move.normalize().multiplyScalar(dt * selectedCharacter.speed); player.position.add(move); }
+  const characterIsMoving = move.lengthSq() > .02;
+  if (characterIsMoving) { move.normalize().multiplyScalar(dt * selectedCharacter.speed); player.position.add(move); }
   player.position.x = THREE.MathUtils.clamp(player.position.x, -5.05, 5.05);
   player.position.z = THREE.MathUtils.clamp(player.position.z, -66, 15);
   player.rotation.y = yaw;
+  if (jackMixer && jackModel?.visible) {
+    const isFiring = performance.now() - lastShot < selectedCharacter.fireRate + 80;
+    playJackAction(isFiring ? 'Gun_Shoot' : characterIsMoving ? 'Run' : 'Idle_Gun');
+    jackMixer.update(dt);
+  }
   const camOffset = new THREE.Vector3(Math.sin(yaw) * 5.2, 3.5 + pitch * 3.5, Math.cos(yaw) * 5.2);
   camera.position.lerp(player.position.clone().add(camOffset), 1 - Math.pow(.001, dt));
   camera.lookAt(player.position.clone().add(new THREE.Vector3(0, 1.5 + pitch * 5, 0)).add(forward.multiplyScalar(7)));
